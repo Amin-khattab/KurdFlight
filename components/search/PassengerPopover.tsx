@@ -37,7 +37,7 @@ export function PassengerPopover({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 6 }}
           transition={{ duration: 0.16 }}
-          className="absolute right-0 top-[calc(100%+0.6rem)] z-30 w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.14)] sm:w-[26rem]"
+          className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-30 rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.14)] sm:left-auto sm:right-0 sm:w-[26rem] sm:p-5"
         >
           <div className="border-b border-slate-100 pb-4">
             <p className="text-sm font-semibold text-slate-900">Passengers and cabin class</p>
@@ -46,16 +46,16 @@ export function PassengerPopover({
 
           <div className="space-y-4 py-4">
             {passengerRows.map((row) => (
-              <div key={row.key} className="flex items-center justify-between gap-4">
+              <div key={row.key} className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{row.label}</p>
                   <p className="text-sm text-slate-500">{row.hint}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => onChangePassenger(row.key, -1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg text-slate-700 transition hover:bg-slate-50"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-lg text-slate-700 transition hover:bg-slate-50"
                     aria-label={`Decrease ${row.label}`}
                   >
                     -
@@ -66,7 +66,7 @@ export function PassengerPopover({
                   <button
                     type="button"
                     onClick={() => onChangePassenger(row.key, 1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg text-slate-700 transition hover:bg-slate-50"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-lg text-slate-700 transition hover:bg-slate-50"
                     aria-label={`Increase ${row.label}`}
                   >
                     +
@@ -81,7 +81,7 @@ export function PassengerPopover({
             <select
               value={cabin}
               onChange={(event) => onCabinChange(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-400"
+              className="mt-2 min-h-[3rem] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-400"
             >
               <option value="economy">Economy</option>
               <option value="premium-economy">Premium Economy</option>

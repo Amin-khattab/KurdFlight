@@ -193,8 +193,11 @@ export default function FlightsMap({ origin, destination }: FlightsMapProps) {
         <MapContainer
           center={center}
           zoom={4}
-          scrollWheelZoom={false}
-          className="h-full w-full bg-slate-100"
+          scrollWheelZoom
+          touchZoom
+          dragging
+          doubleClickZoom
+          className="h-full w-full touch-none bg-slate-100"
           zoomControl={false}
         >
           <EnsureMapSize />

@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BagSelector } from "./BagSelector";
-import { FareSelector } from "./FareSelector";
+import { FlightLegSection } from "./FlightLegSection";
 import { PriceSummaryCard } from "./PriceSummaryCard";
-import { SeatSelector } from "./SeatSelector";
 import { bagOptions, fareOptions, seatOptions } from "@/lib/mock-flight-options";
 import type { MockFlight } from "@/lib/mock-flights";
 
@@ -12,6 +10,11 @@ type FlightLegConfig = {
   key: "outbound" | "return";
   title: string;
   flight: MockFlight;
+  dateLabel: string;
+  originName: string;
+  destinationName: string;
+  originCode: string;
+  destinationCode: string;
 };
 
 type FlightCustomizationPanelProps = {
@@ -110,34 +113,31 @@ export function FlightCustomizationPanel({
   }, [baseItems, extras]);
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-      <div className="space-y-6">
+    <section className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_18.5rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="space-y-3">
         {legs.map((leg) => {
           const selection = selections[leg.key];
 
           return (
-            <div key={leg.key} className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">{leg.title}</p>
-                  <h3 className="mt-1 text-xl font-semibold text-slate-900">{leg.flight.airline}</h3>
-                </div>
-                <div className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
-                  ${leg.flight.price} base
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <FareSelector value={selection.fare} onChange={(value) => updateSelection(leg.key, "fare", value)} />
-                <BagSelector value={selection.bags} onChange={(value) => updateSelection(leg.key, "bags", value)} />
-                <SeatSelector value={selection.seat} onChange={(value) => updateSelection(leg.key, "seat", value)} />
-              </div>
-            </div>
+            <FlightLegSection
+              key={leg.key}
+              legLabel={leg.title}
+              flight={leg.flight}
+              originName={leg.originName}
+              destinationName={leg.destinationName}
+              originCode={leg.originCode}
+              destinationCode={leg.destinationCode}
+              dateLabel={leg.dateLabel}
+              selection={selection}
+              onFareChange={(value) => updateSelection(leg.key, "fare", value)}
+              onBagsChange={(value) => updateSelection(leg.key, "bags", value)}
+              onSeatChange={(value) => updateSelection(leg.key, "seat", value)}
+            />
           );
         })}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 md:sticky md:top-6">
         <PriceSummaryCard
           passengers={`${passengersLabel} · ${cabin}`}
           baseItems={baseItems}
@@ -146,10 +146,10 @@ export function FlightCustomizationPanel({
           totalPrice={totalPrice}
         />
 
-        <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Trip help</p>
-          <h3 className="mt-2 text-lg font-semibold text-slate-900">Before you continue</h3>
-          <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Trip help</p>
+          <h3 className="mt-2 text-base font-semibold text-slate-900">Before you continue</h3>
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
             <li>Outbound and return are customized separately but summarized together.</li>
             <li>Fare, bags, and seats update the round-trip estimate immediately.</li>
             <li>Final airline pricing rules and checkout flow come in the next step.</li>

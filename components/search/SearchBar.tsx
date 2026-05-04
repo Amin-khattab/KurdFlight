@@ -173,6 +173,7 @@ export function SearchBar({
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const seededState = useMemo(() => buildInitialState(initialState), [initialState]);
+  const [supportsHover, setSupportsHover] = useState(false);
 
   const [tripType, setTripType] = useState<TripType>(seededState.tripType);
   const [from, setFrom] = useState<AirportOption>(seededState.from);
@@ -200,6 +201,17 @@ export function SearchBar({
     setCabin(seededState.cabin);
     setOpenPanel(null);
   }, [seededState]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setSupportsHover(mediaQuery.matches);
+    update();
+
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -304,10 +316,11 @@ export function SearchBar({
   }
 
   function handleHoverOpen(panel: OpenPanel) {
-    if (panel) setOpenPanel(panel);
+    if (supportsHover && panel) setOpenPanel(panel);
   }
 
   function handleHoverClose(panel: OpenPanel) {
+    if (!supportsHover) return;
     setOpenPanel((current) => {
       if (panel === "departure" || panel === "return") {
         return isDatePanel(current) ? null : current;
@@ -320,7 +333,7 @@ export function SearchBar({
     <div
       ref={containerRef}
       className={`rounded-3xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)] ${
-        variant === "results" ? "p-4 sm:p-5" : "p-5 sm:p-6"
+        variant === "results" ? "p-4 sm:p-5" : "p-4 sm:p-6"
       }`}
     >
       <Header tripType={tripType} setTripType={setTripType} variant={variant} />
@@ -347,7 +360,7 @@ export function SearchBar({
             <button
               type="button"
               onClick={handleSwap}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
               aria-label="Swap origin and destination"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -374,7 +387,7 @@ export function SearchBar({
           </div>
         </div>
 
-        <div className={`grid gap-4 ${variant === "results" ? "xl:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)]" : "xl:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)]"}`}>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)]">
           <div
             className="relative grid gap-4 md:grid-cols-2 xl:col-span-2"
             onMouseLeave={() => handleHoverClose("departure")}
@@ -389,7 +402,7 @@ export function SearchBar({
                 setDateField("departure");
                 setOpenPanel("departure");
               }}
-              className="block w-full rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300"
+              className="block min-h-[5.5rem] w-full rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300"
             >
               <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Departure</span>
               <span className="mt-2 block text-base font-medium text-slate-900">{formatShortDate(departureDate)}</span>
@@ -407,7 +420,7 @@ export function SearchBar({
                 setOpenPanel("return");
               }}
               disabled={tripType === "one-way"}
-              className={`block w-full rounded-2xl border p-4 text-left transition ${
+              className={`block min-h-[5.5rem] w-full rounded-2xl border p-4 text-left transition ${
                 tripType === "one-way"
                   ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400"
                   : "border-slate-200 bg-white hover:border-blue-300"
@@ -439,7 +452,7 @@ export function SearchBar({
             <button
               type="button"
               onClick={() => setOpenPanel("passengers")}
-              className="block w-full rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300"
+              className="block min-h-[5.5rem] w-full rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300"
             >
               <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Passengers and cabin
@@ -468,7 +481,7 @@ export function SearchBar({
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:self-start lg:self-auto">
               <div className="flex flex-wrap gap-2">
                 <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                   Mock search
@@ -480,7 +493,7 @@ export function SearchBar({
 
               <button
                 type="submit"
-                className="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-8 py-4 text-sm font-semibold text-white transition hover:bg-blue-800"
+                className="inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-blue-700 px-8 py-4 text-sm font-semibold text-white transition hover:bg-blue-800"
               >
                 Search flights
               </button>

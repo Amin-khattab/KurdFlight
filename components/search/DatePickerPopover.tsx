@@ -94,7 +94,7 @@ export function DatePickerPopover({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 6 }}
           transition={{ duration: 0.16 }}
-          className="absolute left-0 top-[calc(100%+0.6rem)] z-30 w-[min(34rem,calc(100vw-2rem))] max-w-none rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.14)] sm:p-5"
+          className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-30 w-auto rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.14)] sm:left-0 sm:right-auto sm:w-[min(34rem,calc(100vw-2rem))] sm:max-w-none sm:p-5"
         >
           <div className="flex flex-col gap-4 border-b border-slate-100 pb-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -123,7 +123,7 @@ export function DatePickerPopover({
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="mt-4 flex items-center justify-between gap-2 sm:gap-3">
             <button
               type="button"
               onClick={onPrevMonth}
@@ -149,7 +149,7 @@ export function DatePickerPopover({
             ))}
           </div>
 
-          <div className="mt-2 grid grid-cols-7 gap-1.5">
+          <div className="mt-2 grid grid-cols-7 gap-1">
             {calendarDays.map(({ date, currentMonth }) => {
               const selected = isSameDay(date, departureDate) || isSameDay(date, returnDate);
               const inRange = tripType === "round-trip" && isBetween(date, departureDate, returnDate);
@@ -159,7 +159,7 @@ export function DatePickerPopover({
                   key={date.toISOString()}
                   type="button"
                   onClick={() => onSelectDate(date)}
-                  className={`rounded-xl px-2 py-2.5 text-sm transition sm:py-3 ${
+                  className={`rounded-xl px-1.5 py-2 text-sm transition sm:px-2 sm:py-3 ${
                     selected
                       ? "bg-blue-700 font-semibold text-white"
                       : inRange

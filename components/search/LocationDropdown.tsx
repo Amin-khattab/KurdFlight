@@ -30,7 +30,7 @@ export function LocationDropdown({
 
   return (
     <div className="relative min-w-0">
-      <label className="flex min-h-[6.5rem] flex-col rounded-2xl border border-slate-200 bg-white px-4 py-3 transition focus-within:border-blue-400 hover:border-blue-300">
+      <label className="flex min-h-[5.75rem] flex-col rounded-2xl border border-slate-200 bg-white px-4 py-3 transition focus-within:border-blue-400 hover:border-blue-300 sm:min-h-[6.25rem]">
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
           {label}
         </span>
@@ -39,7 +39,7 @@ export function LocationDropdown({
           onFocus={onOpen}
           onChange={(event) => handleInputChange(event.target.value)}
           placeholder="Type a city or airport"
-          className="mt-2 h-6 w-full min-w-0 border-0 p-0 text-[15px] font-semibold tracking-tight text-slate-900 outline-none placeholder:text-slate-400"
+          className="mt-2 h-6 w-full min-w-0 border-0 p-0 text-[15px] font-semibold tracking-tight text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
           aria-label={label}
           autoComplete="off"
         />
@@ -53,7 +53,7 @@ export function LocationDropdown({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.16 }}
-            className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-30 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.12)]"
+            className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-30 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.12)] max-sm:max-h-[70vh]"
           >
             <div className="border-b border-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
               Suggested places

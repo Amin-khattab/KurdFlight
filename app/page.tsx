@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { FeaturedDestinationsSection } from "@/components/home/FeaturedDestinationsSection";
 import { SearchBar } from "@/components/search/SearchBar";
 
 const routes = [
@@ -64,25 +64,50 @@ const destinations = [
     toCode: "IST-CITY",
     description: "A strong choice for city breaks, connections, and business travel from the Kurdistan Region.",
     tag: "City + connections",
+    imageUrl:
+      "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1200&q=80",
   },
   {
     name: "Dubai",
     toCode: "DXB-CITY",
     description: "Fast access to shopping, events, and onward international travel with frequent demand.",
     tag: "Business + leisure",
+    imageUrl:
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80",
   },
   {
     name: "Antalya",
     toCode: "AYT-CITY",
     description: "A warm-weather favorite for holiday travel, family trips, and coastal getaways.",
     tag: "Seasonal favorite",
+    imageUrl:
+      "https://images.pexels.com/photos/2347334/pexels-photo-2347334.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  },
+  {
+    name: "Berlin",
+    toCode: "BER-CITY",
+    description: "A favorite for longer city stays, creative neighborhoods, and practical European connections.",
+    tag: "Culture + long stay",
+    imageUrl:
+      "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    name: "Erbil",
+    toCode: "EBL-CITY",
+    description: "A polished gateway to the region with business travel demand, modern hotels, and strong local access.",
+    tag: "Regional hub",
+    imageUrl:
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    name: "Sulaymaniyah",
+    toCode: "ISU",
+    description: "A refined city break with mountain surroundings, local culture, and a calmer regional pace.",
+    tag: "Local favorite",
+    imageUrl:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
   },
 ];
-
-const sectionMotion = {
-  hidden: { opacity: 0, y: 18 },
-  visible: { opacity: 1, y: 0 },
-};
 
 function buildFlightsHref(params: Record<string, string>) {
   return `/flights?${new URLSearchParams(params).toString()}`;
@@ -109,6 +134,21 @@ function SectionHeading({
 }
 
 export default function Home() {
+  const destinationCards = destinations.map((destination) => ({
+    ...destination,
+    href: buildFlightsHref({
+      from: "EBL-CITY",
+      to: destination.toCode,
+      departure: "2026-05-14",
+      return: "2026-05-21",
+      adults: "1",
+      children: "0",
+      infants: "0",
+      cabin: "economy",
+      tripType: "round-trip",
+    }),
+  }));
+
   return (
     <main className="bg-slate-50 text-slate-900">
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
@@ -153,25 +193,20 @@ export default function Home() {
       </header>
 
       <section id="search" className="border-b border-slate-200 bg-gradient-to-b from-blue-50 via-white to-slate-50">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 xl:grid-cols-[1.1fr_0.9fr] xl:items-center lg:px-8 lg:py-20">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={sectionMotion}
-            transition={{ duration: 0.45 }}
-          >
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-12 xl:grid-cols-[1.1fr_0.9fr] xl:items-center lg:px-8 lg:py-20">
+          <div>
             <div className="inline-flex items-center rounded-full border border-blue-200 bg-white px-3 py-1 text-sm font-medium text-blue-700 shadow-sm">
               Trusted flight booking from the Kurdistan Region
             </div>
-            <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-5 max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
               Book flights quickly, compare routes clearly, and travel with confidence.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
               KurdFlight helps travelers search regional and international flights with transparent
               pricing, practical route options, and a booking experience built for real trips.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-slate-600">
+            <div className="mt-6 flex flex-col gap-3 text-sm text-slate-600 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
                 Live route availability
@@ -185,26 +220,17 @@ export default function Home() {
                 Support when plans change
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.08 }}
-          >
+          <div>
             <SearchBar />
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      <motion.section
+      <section
         id="routes"
         className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={sectionMotion}
-        transition={{ duration: 0.4 }}
       >
         <SectionHeading
           eyebrow="Popular routes"
@@ -243,16 +269,11 @@ export default function Home() {
             </Link>
           ))}
         </div>
-      </motion.section>
+      </section>
 
-      <motion.section
+      <section
         id="why-kurdflight"
         className="border-y border-slate-200 bg-white"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={sectionMotion}
-        transition={{ duration: 0.4 }}
       >
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <SectionHeading
@@ -273,16 +294,11 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      <motion.section
+      <section
         id="destinations"
         className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={sectionMotion}
-        transition={{ duration: 0.4 }}
       >
         <SectionHeading
           eyebrow="Featured destinations"
@@ -290,42 +306,8 @@ export default function Home() {
           description="Each destination card highlights a practical reason people book it, keeping the section helpful rather than decorative."
         />
 
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
-          {destinations.map((destination) => (
-            <article
-              key={destination.name}
-              className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:shadow-md"
-            >
-              <div className="h-44 bg-gradient-to-br from-blue-700 via-indigo-600 to-sky-500" />
-              <div className="p-6">
-                <div className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                  {destination.tag}
-                </div>
-                <h3 className="mt-4 text-2xl font-semibold tracking-tight text-slate-900">
-                  {destination.name}
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{destination.description}</p>
-                <Link
-                  href={buildFlightsHref({
-                    from: "EBL-CITY",
-                    to: destination.toCode,
-                    departure: "2026-05-14",
-                    return: "2026-05-21",
-                    adults: "1",
-                    children: "0",
-                    infants: "0",
-                    cabin: "economy",
-                    tripType: "round-trip",
-                  })}
-                  className="mt-5 inline-flex text-sm font-semibold text-blue-700 transition hover:text-blue-800"
-                >
-                  Explore flights
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
-      </motion.section>
+        <FeaturedDestinationsSection destinations={destinationCards} />
+      </section>
 
       <footer id="support" className="border-t border-slate-200 bg-white">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_0.8fr_0.8fr] lg:px-8">

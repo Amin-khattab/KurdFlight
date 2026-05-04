@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FlightCustomizationPanel } from "@/components/flights/FlightCustomizationPanel";
 import { FlightDealSummary } from "@/components/flights/FlightDealSummary";
-import { FlightTimeline } from "@/components/flights/FlightTimeline";
 import { mockAirports } from "@/lib/mock-airports";
 import { mockFlights } from "@/lib/mock-flights";
 import { mockReturnFlightByOutboundId } from "@/lib/mock-round-trip";
@@ -50,6 +49,10 @@ function buildLegTitle(type: "outbound" | "return") {
   return type === "outbound" ? "Outbound" : "Return";
 }
 
+function buildFlexibleLabel(value: string | undefined, fallback: string) {
+  return value ? formatDate(value) : fallback;
+}
+
 export default async function FlightDealPage({
   params,
   searchParams,
@@ -72,13 +75,13 @@ export default async function FlightDealPage({
   const infants = Number(query.infants ?? "0");
   const passengers = formatPassengers(adults, children, infants);
   const cabin = titleCase(query.cabin ?? "economy");
-  const departureLabel = formatDate(query.departure);
-  const tripType = query.tripType ?? (query.return ? "round-trip" : "one-way");
+  const departureLabel = buildFlexibleLabel(query.departure, "Flexible outbound");
+  const tripType = query.tripType === "round-trip" || Boolean(query.return) ? "round-trip" : "one-way";
   const returnFlightId = mockReturnFlightByOutboundId[flight.id];
   const returnFlight = tripType === "round-trip" ? mockFlights.find((item) => item.id === returnFlightId) ?? null : null;
   const returnOriginAirport = returnFlight ? findAirportByCode(returnFlight.origin) : null;
   const returnDestinationAirport = returnFlight ? findAirportByCode(returnFlight.destination) : null;
-  const returnLabel = formatDate(query.return);
+  const returnLabel = buildFlexibleLabel(query.return, "Flexible return");
   const backHref = `/flights?${new URLSearchParams({
     from: query.from ?? flight.origin,
     to: query.to ?? flight.destination,
@@ -96,6 +99,11 @@ export default async function FlightDealPage({
       key: "outbound" as const,
       title: buildLegTitle("outbound"),
       flight,
+      dateLabel: departureLabel,
+      originName: originAirport?.name ?? flight.origin,
+      destinationName: destinationAirport?.name ?? flight.destination,
+      originCode: originAirport?.code ?? flight.origin,
+      destinationCode: destinationAirport?.code ?? flight.destination,
     },
     ...(returnFlight
       ? [
@@ -103,6 +111,11 @@ export default async function FlightDealPage({
             key: "return" as const,
             title: buildLegTitle("return"),
             flight: returnFlight,
+            dateLabel: returnLabel,
+            originName: returnOriginAirport?.name ?? returnFlight.origin,
+            destinationName: returnDestinationAirport?.name ?? returnFlight.destination,
+            originCode: returnOriginAirport?.code ?? returnFlight.origin,
+            destinationCode: returnDestinationAirport?.code ?? returnFlight.destination,
           },
         ]
       : []),
@@ -110,7 +123,7 @@ export default async function FlightDealPage({
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-4">
         <div className="flex items-center justify-between gap-4">
           <Link
             href={backHref}
@@ -128,32 +141,6 @@ export default async function FlightDealPage({
           subtitle={`${flight.airline} · ${flight.flightNumber} · ${flight.stops === 0 ? "Nonstop" : `${flight.stops} stop`}`}
           meta={`${departureLabel} · ${flight.departureTime} - ${flight.arrivalTime} · ${flight.duration}`}
         />
-
-        <section className="space-y-6">
-          <div className="space-y-6">
-            <FlightTimeline
-              legLabel="Outbound"
-              flight={flight}
-              originName={originAirport?.name ?? flight.origin}
-              destinationName={destinationAirport?.name ?? flight.destination}
-              originCode={originAirport?.code ?? flight.origin}
-              destinationCode={destinationAirport?.code ?? flight.destination}
-              dateLabel={departureLabel}
-            />
-
-            {returnFlight ? (
-              <FlightTimeline
-                legLabel="Return"
-                flight={returnFlight}
-                originName={returnOriginAirport?.name ?? returnFlight.origin}
-                destinationName={returnDestinationAirport?.name ?? returnFlight.destination}
-                originCode={returnOriginAirport?.code ?? returnFlight.origin}
-                destinationCode={returnDestinationAirport?.code ?? returnFlight.destination}
-                dateLabel={returnLabel}
-              />
-            ) : null}
-          </div>
-        </section>
 
         <FlightCustomizationPanel
           legs={legs}
