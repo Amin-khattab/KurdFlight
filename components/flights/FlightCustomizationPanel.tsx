@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { FlightLegSection } from "./FlightLegSection";
 import { PriceSummaryCard } from "./PriceSummaryCard";
 import { bagOptions, fareOptions, seatOptions } from "@/lib/mock-flight-options";
 import type { MockFlight } from "@/lib/mock-flights";
+import { q } from "framer-motion/client";
 
 type FlightLegConfig = {
   key: "outbound" | "return";
@@ -56,6 +57,36 @@ export function FlightCustomizationPanel({
   infants,
 }: FlightCustomizationPanelProps) {
   const [selections, setSelections] = useState<Record<string, LegSelection>>(() => buildDefaultSelections(legs));
+  const [quotes,setQuotes] = useState<Record<string,unknown>>({})
+
+  useEffect(() => {
+    async function fetchQuotes() {
+      const entries = await Promise.all(
+        legs.map(async (leg) => {
+          const selection = selections[leg.key];
+          const response = await fetch("/api/bookings/quote", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              flightId: leg.flight.id,
+              fare: selection.fare,
+              bag: selection.bags,
+              seat: selection.seat,
+              adults,
+              children,
+              infants,
+            }),
+          });
+          const data = await response.json();
+          return [leg.key, data] as const;
+        })
+      );
+      setQuotes(Object.fromEntries(entries));
+    }
+    fetchQuotes();
+  }, [legs, selections, adults, children, infants]);
 
   const chargeablePassengers = Math.max(1, adults + children);
 
@@ -68,6 +99,40 @@ export function FlightCustomizationPanel({
       },
     }));
   }
+
+  const quoteBaseItems = legs.map((leg) =>{
+    const quote = quotes[leg.key] as any
+    const selection = selections[leg.key]
+
+    return {
+      label:`${leg.title} title`,
+      value:`${leg.flight.airline}  ${leg.flight.flightNumber}`,
+      total: quote?.pricing?.baseSubtota ?? leg.flight.price * chargeablePassengers    
+    }
+  })
+
+  const quoteExtras = legs.flatMap((leg) => {
+    const quote = quotes[leg.key] as any
+    const selection = selections[leg.key]
+
+    return [
+      {
+        label:`${leg.title} fare`,
+        value: selection.fare,
+        totalDelta: quote?.pricing?.fareSubtotal ?? 0
+      },
+      {
+        label:`${leg.title} bags`,
+        value: selection.bags,
+        totalDelta: quote?.pricing?.bagSubtotal ?? 0
+      },
+      {
+        label:`${leg.title} seats`,
+        value: selection.seat,
+        totalDelta: quote?.pricing?.seatSubtotal ?? 0
+      }
+    ]
+  })
 
   const baseItems = useMemo(
     () =>

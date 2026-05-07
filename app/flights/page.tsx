@@ -1,6 +1,5 @@
 import { FlightsResultsPanel } from "@/components/flights/FlightsResultsPanel";
 import { FlightsSearchBar } from "@/components/flights/FlightsSearchBar";
-import { mockFlights } from "@/lib/mock-flights";
 import { mockAirports } from "@/lib/mock-airports";
 
 type SearchParams = {
@@ -81,17 +80,32 @@ export default async function FlightsPage({
   const sortBy = titleCase(params.sort ?? "recommended");
   const tripType = returnDate ? "round-trip" : "one-way";
 
-  const originCodes = resolveAirportCodes(from);
-  const destinationCodes = resolveAirportCodes(to);
+  const query = new URLSearchParams({
+    from,
+    to,
+    departure:departure ?? "",
+    adults:String(adults),
+    children:String(children),
+    infants:String(infants),
+    cabin:params.cabin ?? "economy"
+  })
 
-  const exactMatches = mockFlights.filter(
-    (flight) => originCodes.includes(flight.origin) && destinationCodes.includes(flight.destination),
-  );
+  if(returnDate){
+    query.set("return",returnDate)
+  }
 
-  const flights =
-    exactMatches.length > 0
-      ? exactMatches
-      : mockFlights.filter((flight) => destinationCodes.includes(flight.destination)).slice(0, 4);
+  const response = await fetch(
+    `http://localhost:3000/api/flights/search?${query.toString()}`,
+    {cache:"no-store"}
+  )
+
+  if(!response.ok){
+    throw new Error("Failed to fetch flight search results")
+  }
+
+  const data = await response.json()
+
+  const flights = data.results ?? []
 
   const fromLabel = formatRouteLabel(from);
   const toLabel = formatRouteLabel(to);

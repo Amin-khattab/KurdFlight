@@ -62,10 +62,21 @@ export default async function FlightDealPage({
 }) {
   const { flightId } = await params;
   const query = await searchParams;
-  const flight = mockFlights.find((item) => item.id === flightId);
 
+  const response = await fetch(`http://localhost:3000/api/flights/${flightId}`,{
+    cache : "no-store"
+  })
+  
+  if(!response.ok){
+    notFound()
+  }
+
+  const data = await response.json()
+
+  const flight = data.flight
+  
   if (!flight) {
-    notFound();
+    notFound()
   }
 
   const originAirport = findAirportByCode(flight.origin);
