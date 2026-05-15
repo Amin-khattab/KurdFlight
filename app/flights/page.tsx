@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { FlightsResultsPanel } from "@/components/flights/FlightsResultsPanel";
 import { FlightsSearchBar } from "@/components/flights/FlightsSearchBar";
 import { mockAirports } from "@/lib/mock-airports";
+import { mockFlights } from "@/lib/mock-flights";
 
 type SearchParams = {
   from?: string;
@@ -51,6 +53,21 @@ function resolveMapAirport(code: string | null) {
   );
 }
 
+function resolveSearchResults(from: string, to: string) {
+  const originCodes = resolveAirportCodes(from);
+  const destinationCodes = resolveAirportCodes(to);
+
+  const matchingFlights = mockFlights.filter((flight) => {
+    return originCodes.includes(flight.origin) && destinationCodes.includes(flight.destination);
+  });
+
+  const fallbackFlights = mockFlights
+    .filter((flight) => destinationCodes.includes(flight.destination))
+    .slice(0, 4);
+
+  return matchingFlights.length > 0 ? matchingFlights : fallbackFlights;
+}
+
 function formatRouteLabel(code: string | null) {
   const airport = findAirportByCode(code);
   if (!airport) return "Any route";
@@ -80,32 +97,7 @@ export default async function FlightsPage({
   const sortBy = titleCase(params.sort ?? "recommended");
   const tripType = returnDate ? "round-trip" : "one-way";
 
-  const query = new URLSearchParams({
-    from,
-    to,
-    departure:departure ?? "",
-    adults:String(adults),
-    children:String(children),
-    infants:String(infants),
-    cabin:params.cabin ?? "economy"
-  })
-
-  if(returnDate){
-    query.set("return",returnDate)
-  }
-
-  const response = await fetch(
-    `http://localhost:3000/api/flights/search?${query.toString()}`,
-    {cache:"no-store"}
-  )
-
-  if(!response.ok){
-    throw new Error("Failed to fetch flight search results")
-  }
-
-  const data = await response.json()
-
-  const flights = data.results ?? []
+  const flights = resolveSearchResults(from, to);
 
   const fromLabel = formatRouteLabel(from);
   const toLabel = formatRouteLabel(to);
@@ -126,6 +118,15 @@ export default async function FlightsPage({
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-5">
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href="/"
+            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            Back to home
+          </Link>
+        </div>
+
         <FlightsSearchBar
           fromCode={from}
           toCode={to}

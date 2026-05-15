@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { AuthRequiredDialog } from "@/components/auth/AuthRequiredDialog";
+import { getStoredAuthUser } from "@/lib/auth-storage";
 import { mockAirports, type AirportOption } from "@/lib/mock-airports";
 import { DatePickerPopover } from "./DatePickerPopover";
 import { LocationDropdown } from "./LocationDropdown";
@@ -27,6 +30,10 @@ type SearchBarProps = {
   initialState?: SearchBarInitialState;
   submitPath?: string;
   variant?: SearchBarVariant;
+  requireAuth?: boolean;
+  isAuthenticated?: boolean;
+  authDialogTitle?: string;
+  authDialogDescription?: string;
 };
 
 const defaultFrom = mockAirports[0];
@@ -137,14 +144,19 @@ function Header({
         </p>
       </div>
 
-      <div className="inline-flex rounded-full bg-slate-100 p-1">
+      <div className="relative inline-flex rounded-full bg-slate-100 p-1 shadow-inner">
+        <motion.div
+          layout
+          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+          className={`absolute top-1 bottom-1 rounded-full bg-white shadow-sm ${
+            tripType === "round-trip" ? "left-1 right-[50%]" : "left-[50%] right-1"
+          }`}
+        />
         <button
           type="button"
           onClick={() => setTripType("round-trip")}
-          className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-            tripType === "round-trip"
-              ? "bg-white text-blue-700 shadow-sm"
-              : "text-slate-600 hover:text-slate-900"
+          className={`relative z-10 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+            tripType === "round-trip" ? "text-blue-700" : "text-slate-600 hover:text-slate-900"
           }`}
         >
           Round trip
@@ -152,10 +164,8 @@ function Header({
         <button
           type="button"
           onClick={() => setTripType("one-way")}
-          className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-            tripType === "one-way"
-              ? "bg-white text-blue-700 shadow-sm"
-              : "text-slate-600 hover:text-slate-900"
+          className={`relative z-10 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+            tripType === "one-way" ? "text-blue-700" : "text-slate-600 hover:text-slate-900"
           }`}
         >
           One way
@@ -169,11 +179,16 @@ export function SearchBar({
   initialState,
   submitPath = "/flights",
   variant = "hero",
+  requireAuth = false,
+  isAuthenticated = false,
+  authDialogTitle,
+  authDialogDescription,
 }: SearchBarProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const seededState = useMemo(() => buildInitialState(initialState), [initialState]);
   const [supportsHover, setSupportsHover] = useState(false);
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
   const [tripType, setTripType] = useState<TripType>(seededState.tripType);
   const [from, setFrom] = useState<AirportOption>(seededState.from);
@@ -312,7 +327,14 @@ export function SearchBar({
       tripType,
     });
 
-    router.push(`${submitPath}?${params.toString()}`);
+    const nextHref = `${submitPath}?${params.toString()}`;
+
+    if (requireAuth && !isAuthenticated && !getStoredAuthUser()) {
+      setIsAuthDialogOpen(true);
+      return;
+    }
+
+    router.push(nextHref);
   }
 
   function handleHoverOpen(panel: OpenPanel) {
@@ -329,16 +351,29 @@ export function SearchBar({
     });
   }
 
-  return (
-    <div
-      ref={containerRef}
-      className={`rounded-3xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)] ${
-        variant === "results" ? "p-4 sm:p-5" : "p-4 sm:p-6"
-      }`}
-    >
-      <Header tripType={tripType} setTripType={setTripType} variant={variant} />
+  const nextHref = `${submitPath}?${new URLSearchParams({
+    from: from.code,
+    to: to.code,
+    departure: departureDate ? departureDate.toISOString().slice(0, 10) : "",
+    return: tripType === "round-trip" && returnDate ? returnDate.toISOString().slice(0, 10) : "",
+    adults: String(passengers.adults),
+    children: String(passengers.children),
+    infants: String(passengers.infants),
+    cabin,
+    tripType,
+  }).toString()}`;
 
-      <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
+  return (
+    <>
+      <div
+        ref={containerRef}
+        className={`rounded-3xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)] ${
+          variant === "results" ? "p-4 sm:p-5" : "p-4 sm:p-6"
+        }`}
+      >
+        <Header tripType={tripType} setTripType={setTripType} variant={variant} />
+
+        <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <div onMouseEnter={() => handleHoverOpen("from")} onMouseLeave={() => handleHoverClose("from")}>
             <LocationDropdown
@@ -516,7 +551,19 @@ export function SearchBar({
             </button>
           </div>
         )}
-      </form>
-    </div>
+        </form>
+      </div>
+
+      <AuthRequiredDialog
+        isOpen={isAuthDialogOpen}
+        onClose={() => setIsAuthDialogOpen(false)}
+        redirectTo={nextHref}
+        title={authDialogTitle ?? "Sign in to search flights"}
+        description={
+          authDialogDescription ??
+          "Create an account or sign in to continue to live flight results and keep your search details saved."
+        }
+      />
+    </>
   );
 }

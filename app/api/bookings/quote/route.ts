@@ -4,12 +4,22 @@ import { mockFlights } from "@/lib/mock-flights";
 export async function POST(request:Request) {
     const body = await request.json()
 
-    const {flightId,fare,bag,seat,adults,children,infants} = body
+    const {flightId,fare,bag,seat} = body
+    const adults = Number(body.adults ?? 0)
+    const children = Number(body.children ?? 0)
+    const infants = Number(body.infants ?? 0)
 
     if(!flightId || !fare || !bag || !seat){
         return NextResponse.json(
             {error:"missing required quote fields"},
             {status:400}
+        )
+    }
+
+    if (Number.isNaN(adults) || Number.isNaN(children) || Number.isNaN(infants) || adults < 1) {
+        return NextResponse.json(
+            { error: "Passenger counts are invalid" },
+            { status: 400 }
         )
     }
 
@@ -26,61 +36,59 @@ export async function POST(request:Request) {
     const childrensubTotal = flight.price * children
     const infantsubStotal = 0
 
-    const basesubTotal =adultsubTotal + childrensubTotal + infantsubStotal
+    const baseSubTotal =adultsubTotal + childrensubTotal + infantsubStotal
 
-    let farecharge = 0
+    let fareSubTotal = 0
 
     if(fare === "standard"){
-        farecharge = 25
+        fareSubTotal = 25
     }else if(fare === "flex"){
-        farecharge = 60
+        fareSubTotal = 60
     }
 
     let farechargePerPerson = adults + children
 
-    farecharge =  farecharge * farechargePerPerson
+    fareSubTotal =  fareSubTotal * farechargePerPerson
 
-    let bagCharge = 0
+    let bagSubTotal = 0
 
     if(bag === "cabin-bag"){
-        bagCharge = 18
+        bagSubTotal = 18
     }else if(bag === "checked-bag"){
-        bagCharge = 42
+        bagSubTotal = 42
     }
 
     let bagChargePerPerson = adults + children
 
-    bagCharge = bagCharge * bagChargePerPerson
+    bagSubTotal = bagSubTotal * bagChargePerPerson
 
-    let seatcharge = 0
+    let seatSubTotal = 0
 
     if(seat === "standard-seat"){
-        seatcharge = 14
+        seatSubTotal = 14
     }else if(seat === "extra-legroom"){
-        seatcharge = 36
+        seatSubTotal = 36
     }
 
     let seatChargeperPerson = adults + children
 
-    seatcharge = seatcharge * seatChargeperPerson
+    seatSubTotal = seatSubTotal * seatChargeperPerson
 
-    const total = basesubTotal + farecharge + bagCharge + seatcharge
+    const total = baseSubTotal + fareSubTotal + bagSubTotal + seatSubTotal
 
     return NextResponse.json({
         flightId,
         passengers:{
         adults,
         children,
-        infants},
+        infants,
+        chargeable: adults + children},
         pricing:{
-        basePrise : flight.price,
-        basesubTotal,
-        fare,
-        farecharge,
-        bag,
-        bagCharge,
-        seat,
-        seatcharge},
-        total
+        basePrice : flight.price,
+        baseSubtotal : baseSubTotal,
+        fareSubtotal : fareSubTotal,
+        bagSubtotal : bagSubTotal,
+        seatSubtotal : seatSubTotal,
+        total},
     })
 }

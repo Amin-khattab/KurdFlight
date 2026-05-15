@@ -12,6 +12,11 @@ type PriceSummaryCardProps = {
     totalDelta: number;
   }>;
   totalPrice: number;
+  actionLabel?: string;
+  onAction?: () => void;
+  actionLoading?: boolean;
+  actionDisabled?: boolean;
+  errorMessage?: string | null;
 };
 
 function formatDelta(totalDelta: number) {
@@ -25,6 +30,11 @@ export function PriceSummaryCard({
   chargeablePassengers,
   extras,
   totalPrice,
+  actionLabel,
+  onAction,
+  actionLoading = false,
+  actionDisabled = false,
+  errorMessage = null,
 }: PriceSummaryCardProps) {
   return (
     <aside className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
@@ -64,6 +74,21 @@ export function PriceSummaryCard({
       <p className="mt-3 text-xs leading-5 text-slate-500">
         Taxes are included in this mock total. Final airline pricing may vary at checkout.
       </p>
+      {errorMessage ? (
+        <p className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          {errorMessage}
+        </p>
+      ) : null}
+      {actionLabel && onAction ? (
+        <button
+          type="button"
+          onClick={onAction}
+          disabled={actionDisabled || actionLoading}
+          className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-blue-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-300"
+        >
+          {actionLoading ? "Confirming booking..." : actionLabel}
+        </button>
+      ) : null}
     </aside>
   );
 }

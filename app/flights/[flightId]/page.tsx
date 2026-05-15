@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FlightCustomizationPanel } from "@/components/flights/FlightCustomizationPanel";
 import { FlightDealSummary } from "@/components/flights/FlightDealSummary";
+import { getCurrentUser } from "@/lib/auth";
 import { mockAirports } from "@/lib/mock-airports";
 import { mockFlights } from "@/lib/mock-flights";
 import { mockReturnFlightByOutboundId } from "@/lib/mock-round-trip";
@@ -62,18 +63,8 @@ export default async function FlightDealPage({
 }) {
   const { flightId } = await params;
   const query = await searchParams;
-
-  const response = await fetch(`http://localhost:3000/api/flights/${flightId}`,{
-    cache : "no-store"
-  })
-  
-  if(!response.ok){
-    notFound()
-  }
-
-  const data = await response.json()
-
-  const flight = data.flight
+  const currentUser = await getCurrentUser();
+  const flight = mockFlights.find((item) => item.id === flightId) ?? null
   
   if (!flight) {
     notFound()
@@ -160,6 +151,7 @@ export default async function FlightDealPage({
           adults={adults}
           children={children}
           infants={infants}
+          isAuthenticated={Boolean(currentUser)}
         />
       </div>
     </main>

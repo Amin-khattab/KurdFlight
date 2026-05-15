@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { mockFlights } from "@/lib/mock-flights";
-import { error } from "node:console";
-
 export async function GET(request:Request,
      {params} : {params : Promise<{id : string}>}) {
     

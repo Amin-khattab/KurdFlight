@@ -36,7 +36,7 @@ export async function GET(request:Request){
 
     if(!from||!to||!departure){
         return NextResponse.json(
-            {"error":"some required iputs are not here"},
+            {"error":"Missing required search params: from, to, departure"},
             {status:400}
             
         )

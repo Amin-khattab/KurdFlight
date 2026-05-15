@@ -1,8 +1,8 @@
-"use client";
-
 import Link from "next/link";
 import { FeaturedDestinationsSection } from "@/components/home/FeaturedDestinationsSection";
+import { AuthHeaderActions } from "@/components/auth/AuthHeaderActions";
 import { SearchBar } from "@/components/search/SearchBar";
+import { getCurrentUser } from "@/lib/auth";
 
 const routes = [
   {
@@ -133,7 +133,10 @@ function SectionHeading({
   );
 }
 
-export default function Home() {
+export default async function Home() {
+
+  const user = await getCurrentUser()
+
   const destinationCards = destinations.map((destination) => ({
     ...destination,
     href: buildFlightsHref({
@@ -176,6 +179,16 @@ export default function Home() {
           </nav>
 
           <div className="flex items-center gap-3">
+            <AuthHeaderActions
+              user={
+                user
+                  ? {
+                      name: user.name,
+                      email: user.email,
+                    }
+                  : null
+              }
+            />
             <a
               href="#support"
               className="hidden rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:inline-flex"
@@ -223,7 +236,7 @@ export default function Home() {
           </div>
 
           <div>
-            <SearchBar />
+            <SearchBar requireAuth isAuthenticated={Boolean(user)} />
           </div>
         </div>
       </section>

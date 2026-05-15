@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { AuthRequiredDialog } from "@/components/auth/AuthRequiredDialog";
 import { FlightLegSection } from "./FlightLegSection";
 import { PriceSummaryCard } from "./PriceSummaryCard";
-import { bagOptions, fareOptions, seatOptions } from "@/lib/mock-flight-options";
+import { BookingConfirmationCard } from "./BookingConfirmationCard";
+import { getStoredAuthUser } from "@/lib/auth-storage";
 import type { MockFlight } from "@/lib/mock-flights";
-import { q } from "framer-motion/client";
+import { saveBookingToLocalStorage, type StoredBooking } from "@/lib/local-bookings";
 
 type FlightLegConfig = {
   key: "outbound" | "return";
@@ -25,6 +27,7 @@ type FlightCustomizationPanelProps = {
   adults: number;
   children: number;
   infants: number;
+  isAuthenticated?: boolean;
 };
 
 type LegSelection = {
@@ -33,8 +36,66 @@ type LegSelection = {
   seat: string;
 };
 
-function findOptionById<T extends { id: string; label: string; priceDelta: number }>(options: T[], id: string) {
-  return options.find((option) => option.id === id) ?? options[0];
+type QuoteResponse = {
+  pricing?: {
+    baseSubtotal?: number;
+    fareSubtotal?: number;
+    bagSubtotal?: number;
+    seatSubtotal?: number;
+    total?: number;
+  };
+};
+
+type BookingNormalizationFallbacks = {
+  adults: number;
+  children: number;
+  infants: number;
+  cabin: string;
+  selections: Record<string, LegSelection>;
+  quoteTotalPrice: number;
+};
+
+function normalizeConfirmedBooking(
+  data: any,
+  fallbacks: BookingNormalizationFallbacks,
+): StoredBooking | null {
+  const raw = data?.booking ?? data;
+
+  if (!raw?.bookingId) return null;
+
+  return {
+    bookingId: raw.bookingId,
+    status: raw.status ?? "confirmed",
+    createdAt: raw.createdAt ?? new Date().toISOString(),
+    outboundFlight: raw.outboundFlight ?? null,
+    returnFlight: raw.returnFlight ?? null,
+    outboundFlightId: raw.outboundFlightId ?? raw.outboundFlight?.id ?? "",
+    returnFlightId: raw.returnFlightId ?? raw.returnFlight?.id ?? null,
+    tripType: raw.tripType === "round-trip" ? "round-trip" : "one-way",
+    passengers: {
+      adults: Number(raw.passengers?.adults ?? fallbacks.adults),
+      children: Number(raw.passengers?.children ?? fallbacks.children),
+      infants: Number(raw.passengers?.infants ?? fallbacks.infants),
+    },
+    cabin: raw.cabin ?? fallbacks.cabin.toLowerCase(),
+    selections: {
+      outbound: raw.selections?.outbound ?? {
+        fare: fallbacks.selections.outbound.fare,
+        bag: fallbacks.selections.outbound.bags,
+        seat: fallbacks.selections.outbound.seat,
+      },
+      ...(raw.selections?.return || fallbacks.selections.return
+        ? {
+            return: raw.selections?.return ?? {
+              fare: fallbacks.selections.return?.fare ?? "light",
+              bag: fallbacks.selections.return?.bags ?? "personal-item",
+              seat: fallbacks.selections.return?.seat ?? "no-seat",
+            },
+          }
+        : {}),
+    },
+    total: Number(raw.total ?? fallbacks.quoteTotalPrice),
+  };
 }
 
 function buildDefaultSelections(legs: FlightLegConfig[]) {
@@ -55,9 +116,14 @@ export function FlightCustomizationPanel({
   adults,
   children,
   infants,
+  isAuthenticated = false,
 }: FlightCustomizationPanelProps) {
   const [selections, setSelections] = useState<Record<string, LegSelection>>(() => buildDefaultSelections(legs));
-  const [quotes,setQuotes] = useState<Record<string,unknown>>({})
+  const [quotes, setQuotes] = useState<Record<string, QuoteResponse>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<StoredBooking | null>(null);
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchQuotes() {
@@ -101,18 +167,17 @@ export function FlightCustomizationPanel({
   }
 
   const quoteBaseItems = legs.map((leg) =>{
-    const quote = quotes[leg.key] as any
-    const selection = selections[leg.key]
+    const quote = quotes[leg.key];
 
     return {
-      label:`${leg.title} title`,
+      label:`${leg.title} ticket`,
       value:`${leg.flight.airline}  ${leg.flight.flightNumber}`,
-      total: quote?.pricing?.baseSubtota ?? leg.flight.price * chargeablePassengers    
+      total: quote?.pricing?.baseSubtotal ?? leg.flight.price * chargeablePassengers    
     }
   })
 
   const quoteExtras = legs.flatMap((leg) => {
-    const quote = quotes[leg.key] as any
+    const quote = quotes[leg.key];
     const selection = selections[leg.key]
 
     return [
@@ -134,93 +199,187 @@ export function FlightCustomizationPanel({
     ]
   })
 
-  const baseItems = useMemo(
-    () =>
-      legs.map((leg) => ({
-        label: `${leg.title} ticket`,
-        value: `${leg.flight.airline} · ${leg.flight.flightNumber}`,
-        total: leg.flight.price * chargeablePassengers,
-      })),
-    [chargeablePassengers, legs],
-  );
+  const quoteTotalPrice = legs.reduce((sum,leg) => {
+    const quote = quotes[leg.key];
+    return sum + (quote?.pricing?.total ?? 0)
+  }, 0)
 
-  const extras = useMemo(() => {
-    return legs.flatMap((leg) => {
-      const selection = selections[leg.key];
-      const fareOption = findOptionById(fareOptions, selection.fare);
-      const bagOption = findOptionById(bagOptions, selection.bags);
-      const seatOption = findOptionById(seatOptions, selection.seat);
+  async function submitBooking() {
+    if (!isAuthenticated && !getStoredAuthUser()) {
+      setIsAuthDialogOpen(true);
+      return;
+    }
 
-      return [
-        {
-          label: `${leg.title} fare`,
-          value: fareOption.label,
-          totalDelta: fareOption.priceDelta * chargeablePassengers,
-        },
-        {
-          label: `${leg.title} bags`,
-          value: bagOption.label,
-          totalDelta: bagOption.priceDelta * chargeablePassengers,
-        },
-        {
-          label: `${leg.title} seats`,
-          value: seatOption.label,
-          totalDelta: seatOption.priceDelta * chargeablePassengers,
-        },
-      ];
-    });
-  }, [chargeablePassengers, legs, selections]);
+    setIsSubmitting(true);
+    setSubmitError(null);
 
-  const totalPrice = useMemo(() => {
-    const baseTotal = baseItems.reduce((sum, item) => sum + item.total, 0);
-    const extrasTotal = extras.reduce((sum, item) => sum + item.totalDelta, 0);
-    return baseTotal + extrasTotal;
-  }, [baseItems, extras]);
+    try {
+      const tripType = legs.length > 1 ? "round-trip" : "one-way";
+      const payload = {
+        outboundFlightId: legs[0]?.flight.id,
+        returnFlightId: legs.find((leg) => leg.key === "return")?.flight.id ?? null,
+        tripType,
+        passengers: {
+          adults,
+          children,
+          infants,
+        },
+        cabin: cabin.toLowerCase(),
+        selections: {
+          outbound: {
+            fare: selections.outbound.fare,
+            bag: selections.outbound.bags,
+            seat: selections.outbound.seat,
+          },
+          ...(selections.return
+            ? {
+                return: {
+                  fare: selections.return.fare,
+                  bag: selections.return.bags,
+                  seat: selections.return.seat,
+                },
+              }
+            : {}),
+        },
+        total: quoteTotalPrice,
+      };
+
+      const response = await fetch("/api/booking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error ?? "We couldn't confirm the booking right now.");
+      }
+
+      const normalizedBooking = normalizeConfirmedBooking(data, {
+        adults,
+        children,
+        infants,
+        cabin,
+        selections,
+        quoteTotalPrice,
+      });
+
+      if (!normalizedBooking) {
+        throw new Error("The booking confirmation response was incomplete.");
+      }
+
+      saveBookingToLocalStorage(normalizedBooking);
+      setConfirmedBooking(normalizedBooking);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "We couldn't confirm the booking right now.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  if (confirmedBooking) {
+    return (
+      <>
+        <section className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_18.5rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <BookingConfirmationCard
+            booking={confirmedBooking}
+            passengersLabel={passengersLabel}
+            cabin={cabin}
+          />
+
+          <div className="space-y-3 md:sticky md:top-6">
+            <PriceSummaryCard
+              passengers={`${passengersLabel} · ${cabin}`}
+              baseItems={quoteBaseItems}
+              chargeablePassengers={chargeablePassengers}
+              extras={quoteExtras}
+              totalPrice={quoteTotalPrice}
+            />
+
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Next step</p>
+              <h3 className="mt-2 text-base font-semibold text-slate-900">Booking saved successfully</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                This is a mock confirmation flow, so no payment was charged. Your saved booking can be
+                reused later from local storage.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <AuthRequiredDialog
+          isOpen={isAuthDialogOpen}
+          onClose={() => setIsAuthDialogOpen(false)}
+          redirectTo={typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/"}
+          title="Sign in to confirm your booking"
+          description="Create an account or sign in to continue to booking confirmation and keep your trip saved in one place."
+        />
+      </>
+    );
+  }
 
   return (
-    <section className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_18.5rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="space-y-3">
-        {legs.map((leg) => {
-          const selection = selections[leg.key];
+    <>
+      <section className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_18.5rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-3">
+          {legs.map((leg) => {
+            const selection = selections[leg.key];
 
-          return (
-            <FlightLegSection
-              key={leg.key}
-              legLabel={leg.title}
-              flight={leg.flight}
-              originName={leg.originName}
-              destinationName={leg.destinationName}
-              originCode={leg.originCode}
-              destinationCode={leg.destinationCode}
-              dateLabel={leg.dateLabel}
-              selection={selection}
-              onFareChange={(value) => updateSelection(leg.key, "fare", value)}
-              onBagsChange={(value) => updateSelection(leg.key, "bags", value)}
-              onSeatChange={(value) => updateSelection(leg.key, "seat", value)}
-            />
-          );
-        })}
-      </div>
-
-      <div className="space-y-3 md:sticky md:top-6">
-        <PriceSummaryCard
-          passengers={`${passengersLabel} · ${cabin}`}
-          baseItems={baseItems}
-          chargeablePassengers={chargeablePassengers}
-          extras={extras}
-          totalPrice={totalPrice}
-        />
-
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Trip help</p>
-          <h3 className="mt-2 text-base font-semibold text-slate-900">Before you continue</h3>
-          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-            <li>Outbound and return are customized separately but summarized together.</li>
-            <li>Fare, bags, and seats update the round-trip estimate immediately.</li>
-            <li>Final airline pricing rules and checkout flow come in the next step.</li>
-          </ul>
+            return (
+              <FlightLegSection
+                key={leg.key}
+                legLabel={leg.title}
+                flight={leg.flight}
+                originName={leg.originName}
+                destinationName={leg.destinationName}
+                originCode={leg.originCode}
+                destinationCode={leg.destinationCode}
+                dateLabel={leg.dateLabel}
+                selection={selection}
+                onFareChange={(value) => updateSelection(leg.key, "fare", value)}
+                onBagsChange={(value) => updateSelection(leg.key, "bags", value)}
+                onSeatChange={(value) => updateSelection(leg.key, "seat", value)}
+              />
+            );
+          })}
         </div>
-      </div>
-    </section>
+
+        <div className="space-y-3 md:sticky md:top-6">
+          <PriceSummaryCard
+            passengers={`${passengersLabel} · ${cabin}`}
+            baseItems={quoteBaseItems}
+            chargeablePassengers={chargeablePassengers}
+            extras={quoteExtras}
+            totalPrice={quoteTotalPrice}
+            actionLabel="Confirm booking"
+            onAction={submitBooking}
+            actionLoading={isSubmitting}
+            actionDisabled={quoteTotalPrice <= 0}
+            errorMessage={submitError}
+          />
+
+          <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Trip help</p>
+            <h3 className="mt-2 text-base font-semibold text-slate-900">Before you continue</h3>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+              <li>Outbound and return are customized separately but summarized together.</li>
+              <li>Fare, bags, and seats update the round-trip estimate immediately.</li>
+              <li>Final airline pricing rules and checkout flow come in the next step.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <AuthRequiredDialog
+        isOpen={isAuthDialogOpen}
+        onClose={() => setIsAuthDialogOpen(false)}
+        redirectTo={typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/"}
+        title="Sign in to confirm your booking"
+        description="Create an account or sign in to continue to booking confirmation and keep your trip saved in one place."
+      />
+    </>
   );
 }
