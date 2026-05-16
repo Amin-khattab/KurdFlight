@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthFormField } from "@/components/auth/AuthFormField";
-import { saveAuthUser } from "@/lib/auth-storage";
 
 export default function SignInPage() {
   const [next, setNext] = useState("/");
@@ -51,13 +50,7 @@ export default function SignInPage() {
         throw new Error("The sign-in response was incomplete.");
       }
 
-      saveAuthUser({
-        name: data.user.name,
-        email: data.user.email,
-        createdAt: new Date().toISOString(),
-      });
-
-      window.location.href = next;
+      window.location.assign(next);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "We couldn't sign you in right now.");
       setIsSubmitting(false);

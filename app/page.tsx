@@ -155,30 +155,32 @@ export default async function Home() {
   return (
     <main className="bg-slate-50 text-slate-900">
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-700 text-sm font-bold text-white">
+        <div className="mx-auto flex max-w-7xl items-center gap-8 px-4 py-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 shrink-0 items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-700 text-sm font-bold text-white shadow-sm">
               KF
             </span>
-            <div>
-              <p className="text-base font-semibold tracking-tight text-slate-900">KurdFlight</p>
+            <div className="min-w-0">
+              <p className="text-[1.05rem] font-semibold tracking-tight text-slate-900">KurdFlight</p>
               <p className="text-xs text-slate-500">Flights across Kurdistan and beyond</p>
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
-            <a href="#routes" className="transition hover:text-blue-700">
+          <nav className="hidden flex-1 items-center justify-center md:flex">
+            <div className="flex items-center gap-9 whitespace-nowrap text-sm font-medium text-slate-600">
+              <a href="#routes" className="shrink-0 transition hover:text-blue-700">
               Popular routes
-            </a>
-            <a href="#why-kurdflight" className="transition hover:text-blue-700">
+              </a>
+              <a href="#why-kurdflight" className="shrink-0 transition hover:text-blue-700">
               Why KurdFlight
-            </a>
-            <a href="#destinations" className="transition hover:text-blue-700">
+              </a>
+              <a href="#destinations" className="shrink-0 transition hover:text-blue-700">
               Destinations
-            </a>
+              </a>
+            </div>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="ml-auto flex shrink-0 items-center gap-2.5">
             <AuthHeaderActions
               user={
                 user
@@ -191,13 +193,13 @@ export default async function Home() {
             />
             <a
               href="#support"
-              className="hidden rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:inline-flex"
+              className="hidden h-11 items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 sm:inline-flex"
             >
               Help
             </a>
             <a
               href="#search"
-              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+              className="inline-flex h-11 items-center rounded-full bg-slate-900 px-5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
             >
               Search flights
             </a>

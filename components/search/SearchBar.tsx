@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { AuthRequiredDialog } from "@/components/auth/AuthRequiredDialog";
-import { getStoredAuthUser } from "@/lib/auth-storage";
 import { mockAirports, type AirportOption } from "@/lib/mock-airports";
 import { DatePickerPopover } from "./DatePickerPopover";
 import { LocationDropdown } from "./LocationDropdown";
@@ -329,7 +328,7 @@ export function SearchBar({
 
     const nextHref = `${submitPath}?${params.toString()}`;
 
-    if (requireAuth && !isAuthenticated && !getStoredAuthUser()) {
+    if (requireAuth && !isAuthenticated) {
       setIsAuthDialogOpen(true);
       return;
     }

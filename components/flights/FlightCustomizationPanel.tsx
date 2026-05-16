@@ -5,7 +5,6 @@ import { AuthRequiredDialog } from "@/components/auth/AuthRequiredDialog";
 import { FlightLegSection } from "./FlightLegSection";
 import { PriceSummaryCard } from "./PriceSummaryCard";
 import { BookingConfirmationCard } from "./BookingConfirmationCard";
-import { getStoredAuthUser } from "@/lib/auth-storage";
 import type { MockFlight } from "@/lib/mock-flights";
 import { saveBookingToLocalStorage, type StoredBooking } from "@/lib/local-bookings";
 
@@ -205,7 +204,7 @@ export function FlightCustomizationPanel({
   }, 0)
 
   async function submitBooking() {
-    if (!isAuthenticated && !getStoredAuthUser()) {
+    if (!isAuthenticated) {
       setIsAuthDialogOpen(true);
       return;
     }
