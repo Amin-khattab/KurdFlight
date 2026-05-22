@@ -35,8 +35,8 @@ export function OptionSelector({ title, value, options, onChange }: OptionSelect
               onClick={() => onChange(option.id)}
               className={`w-full rounded-xl border px-3 py-2.5 text-left transition ${
                 active
-                  ? "border-blue-300 bg-blue-50/70 shadow-sm"
-                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                  ? "border-blue-300 bg-blue-50/70 shadow-sm dark:border-blue-500/70 dark:bg-blue-950/45"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-slate-600 dark:hover:bg-slate-800/70"
               }`}
             >
               <div className="flex items-start justify-between gap-4">
@@ -45,7 +45,11 @@ export function OptionSelector({ title, value, options, onChange }: OptionSelect
                   <p className="mt-1 text-xs leading-4 text-slate-600">{option.description}</p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className={`text-xs font-semibold ${active ? "text-blue-700" : "text-slate-700"}`}>
+                  <p
+                    className={`text-xs font-semibold ${
+                      active ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
                     {formatDelta(option.priceDelta)}
                   </p>
                 </div>

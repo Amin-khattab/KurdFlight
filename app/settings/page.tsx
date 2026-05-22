@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { AccountSettingsForms } from "@/components/auth/AccountSettingsForms";
+import { ThemeSettingsCard } from "@/components/theme/ThemeSettingsCard";
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
@@ -15,7 +17,7 @@ export default async function SettingsPage() {
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/"
-            className="inline-flex h-11 shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+            className="inline-flex h-11 shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800/80"
           >
             Back to home
           </Link>
@@ -33,37 +35,19 @@ export default async function SettingsPage() {
 
           <Link
             href="/my-bookings"
-            className="inline-flex h-11 shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+            className="inline-flex h-11 shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800/80"
           >
             View My Bookings
           </Link>
         </div>
 
-        <section className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Profile</p>
-            <div className="mt-5 space-y-4">
-              <div className="rounded-2xl bg-slate-50 px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Name</p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">{user.name}</p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Email</p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">{user.email}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Coming next</p>
-            <ul className="mt-5 space-y-3 text-sm leading-6 text-slate-600">
-              <li>Saved traveler preferences</li>
-              <li>Password and security controls</li>
-              <li>Notification settings</li>
-              <li>Travel profile management</li>
-            </ul>
-          </div>
-        </section>
+        <AccountSettingsForms
+          user={{
+            name: user.name,
+            email: user.email,
+          }}
+        />
+        <ThemeSettingsCard />
       </div>
     </main>
   );

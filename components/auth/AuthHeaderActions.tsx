@@ -76,21 +76,21 @@ export function AuthHeaderActions({ user }: AuthHeaderActionsProps) {
             <button
               type="button"
               onClick={() => setIsMenuOpen((current) => !current)}
-              className="inline-flex h-11 items-center gap-3 rounded-full border border-slate-200 bg-white pl-2 pr-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+              className="inline-flex h-11 items-center gap-3 rounded-full border border-slate-200 bg-white pl-2 pr-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800/80"
               aria-haspopup="menu"
               aria-expanded={isMenuOpen}
             >
               <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-blue-700 text-xs font-bold text-white">
                 {initials}
-                <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-sky-400" />
+                <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-sky-400 dark:border-slate-900" />
               </span>
               <span className="hidden text-left lg:block">
-                <span className="block max-w-[8.5rem] truncate text-sm font-semibold leading-4 text-slate-900">
+                <span className="block max-w-[8.5rem] truncate text-sm font-semibold leading-4 text-slate-900 dark:text-slate-100">
                   {user.name}
                 </span>
               </span>
               <svg
-                className={`h-4 w-4 text-slate-400 transition ${isMenuOpen ? "rotate-180" : ""}`}
+                className={`h-4 w-4 text-slate-400 transition dark:text-slate-500 ${isMenuOpen ? "rotate-180" : ""}`}
                 viewBox="0 0 20 20"
                 fill="none"
                 aria-hidden="true"
@@ -106,15 +106,15 @@ export function AuthHeaderActions({ user }: AuthHeaderActionsProps) {
             </button>
 
             {isMenuOpen ? (
-              <div className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[18.5rem] overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.14)]">
-                <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-4">
+              <div className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[18.5rem] overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.14)] dark:border-slate-700 dark:bg-slate-950 dark:shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+                <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/80">
                   <div className="flex items-start gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xs font-bold text-white shadow-sm">
                       {initials}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>
-                      <p className="truncate text-sm text-slate-500">{user.email}</p>
+                      <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{user.name}</p>
+                      <p className="truncate text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
                     </div>
                   </div>
                 </div>
@@ -122,31 +122,31 @@ export function AuthHeaderActions({ user }: AuthHeaderActionsProps) {
                 <div className="p-2">
                   <Link
                     href="/my-bookings"
-                    className="flex items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+                    className="flex items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <span>My Bookings</span>
-                    <span className="text-slate-400">Trips</span>
+                    <span className="text-slate-400 dark:text-slate-500">Trips</span>
                   </Link>
                   <Link
                     href="/settings"
-                    className="flex items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+                    className="flex items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <span>Settings</span>
-                    <span className="text-slate-400">Account</span>
+                    <span className="text-slate-400 dark:text-slate-500">Account</span>
                   </Link>
                 </div>
 
-                <div className="border-t border-slate-100 p-2">
+                <div className="border-t border-slate-100 p-2 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={handleSignOut}
                     disabled={isSigningOut}
-                    className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100"
                   >
                     <span>{isSigningOut ? "Signing out..." : "Sign out"}</span>
-                    <span className="text-slate-400">Exit</span>
+                    <span className="text-slate-400 dark:text-slate-500">Exit</span>
                   </button>
                 </div>
               </div>
@@ -157,7 +157,7 @@ export function AuthHeaderActions({ user }: AuthHeaderActionsProps) {
         <>
           <Link
             href="/sign-in?next=%2F"
-            className="hidden h-11 items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 sm:inline-flex"
+            className="hidden h-11 items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 sm:inline-flex dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800/80"
           >
             Sign in
           </Link>
