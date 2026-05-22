@@ -25,3 +25,34 @@ export async function DELETE(
 
   return NextResponse.json({ success: true, bookingId });
 }
+
+export async function GET(request:Request,
+  { params } : {params : Promise <{bookingId:string}>}
+) {
+  
+  const {bookingId} = await params
+
+  if(!bookingId){
+    return NextResponse.json(
+      {error:"there is no Bookings by this id"},
+      {status:404}
+    )
+  }
+
+  const theBookingId = await prisma.booking.findUnique({
+    where:{
+      bookingId
+    }
+  })
+
+  if(!theBookingId){
+    return NextResponse.json(
+      {error:"booking Not Found"},
+      {status:404}
+    )
+  }
+
+  return NextResponse.json(
+    {booking : theBookingId}
+  )
+}

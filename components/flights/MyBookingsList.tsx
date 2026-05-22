@@ -31,11 +31,27 @@ type MyBookingsListProps = {
   initialBookings: BookingCardData[];
 };
 
+type BookingActionState =
+  | { type: "cancel" | "remove"; bookingId: string }
+  | null;
+
 function titleCase(value: string) {
   return value
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+function getStatusClasses(status: string) {
+  if (status === "cancelled") {
+    return "bg-rose-50 text-rose-700";
+  }
+
+  if (status === "confirmed") {
+    return "bg-emerald-50 text-emerald-700";
+  }
+
+  return "bg-slate-100 text-slate-700";
 }
 
 function formatDateTime(value: string) {
@@ -86,8 +102,8 @@ function EmptyState() {
 export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
   const router = useRouter();
   const [bookings, setBookings] = useState(initialBookings);
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [actionState, setActionState] = useState<BookingActionState>(null);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -106,7 +122,7 @@ export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
   }, [feedbackMessage]);
 
   async function handleDelete(bookingId: string) {
-    setDeletingId(bookingId);
+    setSubmittingId(bookingId);
     setErrorMessage(null);
     setFeedbackMessage(null);
 
@@ -122,7 +138,7 @@ export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
       }
 
       setBookings((current) => current.filter((booking) => booking.bookingId !== bookingId));
-      setConfirmingId(null);
+      setActionState(null);
       setFeedbackMessage(`Booking ${bookingId} was removed from My Bookings.`);
       router.refresh();
     } catch (error) {
@@ -130,7 +146,40 @@ export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
         error instanceof Error ? error.message : "We couldn't remove this booking right now.",
       );
     } finally {
-      setDeletingId(null);
+      setSubmittingId(null);
+    }
+  }
+
+  async function handleCancel(bookingId: string) {
+    setSubmittingId(bookingId);
+    setErrorMessage(null);
+    setFeedbackMessage(null);
+
+    try {
+      const response = await fetch(`/api/booking/${encodeURIComponent(bookingId)}/cancel`, {
+        method: "POST",
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.error ?? "We couldn't cancel this booking right now.");
+      }
+
+      setBookings((current) =>
+        current.map((booking) =>
+          booking.bookingId === bookingId ? { ...booking, status: "cancelled" } : booking,
+        ),
+      );
+      setActionState(null);
+      setFeedbackMessage(`Booking ${bookingId} is now marked as cancelled.`);
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "We couldn't cancel this booking right now.",
+      );
+    } finally {
+      setSubmittingId(null);
     }
   }
 
@@ -160,8 +209,9 @@ export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
           {bookings.map((booking) => {
             const totalPassengers =
               booking.passengers.adults + booking.passengers.children + booking.passengers.infants;
-            const isConfirming = confirmingId === booking.bookingId;
-            const isDeleting = deletingId === booking.bookingId;
+            const actionType = booking.status === "cancelled" ? "remove" : "cancel";
+            const isConfirming =
+              actionState?.bookingId === booking.bookingId && actionState.type === actionType;
 
             return (
               <article
@@ -172,7 +222,9 @@ export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-lg font-semibold text-slate-900">{booking.bookingId}</p>
-                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(booking.status)}`}
+                      >
                         {titleCase(booking.status)}
                       </span>
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
@@ -261,20 +313,30 @@ export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
                         </p>
                         <p className="mt-1 text-sm text-slate-500">Manage this reservation</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setErrorMessage(null);
-                          setFeedbackMessage(null);
-                          setConfirmingId((current) =>
-                            current === booking.bookingId ? null : booking.bookingId,
-                          );
-                        }}
-                        aria-expanded={isConfirming}
-                        className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-400 hover:text-slate-900"
-                      >
-                        Remove
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/my-bookings/${encodeURIComponent(booking.bookingId)}`}
+                          className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-400 hover:text-slate-900"
+                        >
+                          View details
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setErrorMessage(null);
+                            setFeedbackMessage(null);
+                            setActionState((current) =>
+                              current?.bookingId === booking.bookingId && current.type === actionType
+                                ? null
+                                : { bookingId: booking.bookingId, type: actionType },
+                            );
+                          }}
+                          aria-expanded={isConfirming}
+                          className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-400 hover:text-slate-900"
+                        >
+                          {actionType === "cancel" ? "Cancel booking" : "Remove"}
+                        </button>
+                      </div>
                     </div>
 
                     <dl className="mt-3 space-y-3 text-sm">
@@ -314,15 +376,15 @@ export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
         </div>
       )}
 
-      {confirmingId ? (
+      {actionState ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <button
             type="button"
-            aria-label="Close remove booking dialog"
+            aria-label="Close booking action dialog"
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
             onClick={() => {
-              if (!deletingId) {
-                setConfirmingId(null);
+              if (!submittingId) {
+                setActionState(null);
                 setErrorMessage(null);
               }
             }}
@@ -335,9 +397,14 @@ export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
                   !
                 </div>
                 <div>
-                  <p className="text-base font-semibold text-slate-900">Remove this booking?</p>
+                  <p className="text-base font-semibold text-slate-900">
+                    {actionState.type === "cancel" ? "Cancel this booking?" : "Remove this booking?"}
+                  </p>
                   <p className="mt-1 text-sm text-slate-500">
-                    {confirmingId} will be removed from My Bookings.
+                    {actionState.bookingId}{" "}
+                    {actionState.type === "cancel"
+                      ? "will remain in your trip history with a cancelled status."
+                      : "will be removed from My Bookings."}
                   </p>
                 </div>
               </div>
@@ -345,7 +412,9 @@ export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
 
             <div className="px-5 py-5">
               <p className="text-sm leading-6 text-slate-600">
-                This action can’t be undone, but you can always create a new booking later.
+                {actionState.type === "cancel"
+                  ? "This keeps a realistic booking history while making it clear that the trip will no longer be used."
+                  : "This action can’t be undone, but you can always create a new booking later."}
               </p>
 
               {errorMessage ? (
@@ -358,21 +427,31 @@ export function MyBookingsList({ initialBookings }: MyBookingsListProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    setConfirmingId(null);
+                    setActionState(null);
                     setErrorMessage(null);
                   }}
-                  disabled={Boolean(deletingId)}
+                  disabled={Boolean(submittingId)}
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Keep booking
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(confirmingId)}
-                  disabled={Boolean(deletingId)}
+                  onClick={() =>
+                    actionState.type === "cancel"
+                      ? handleCancel(actionState.bookingId)
+                      : handleDelete(actionState.bookingId)
+                  }
+                  disabled={Boolean(submittingId)}
                   className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {deletingId ? "Removing..." : "Remove booking"}
+                  {submittingId
+                    ? actionState.type === "cancel"
+                      ? "Cancelling..."
+                      : "Removing..."
+                    : actionState.type === "cancel"
+                      ? "Cancel booking"
+                      : "Remove booking"}
                 </button>
               </div>
             </div>
